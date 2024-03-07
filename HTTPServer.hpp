@@ -33,6 +33,7 @@ private:
     std::unique_ptr<FileHandler> mFileHandler = std::make_unique<FileHandler>();
     unsigned int mServerPort;
     std::string mFileContent;
+    std::string mContentType;
 };
 
 

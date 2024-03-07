@@ -3,7 +3,7 @@
 #include <string>
 #include <fstream>
 
-std::string FileHandler::readHtmlFile(const boost::filesystem::path& filePath, std::function<void(const std::string&)> fillResponseCallback){
+std::string FileHandler::readTextFile(const boost::filesystem::path& filePath, FillResponseType fillResponseCallback){
     std::string line;
     std::ifstream textFile(filePath.string());
     if (textFile.is_open()) {
@@ -20,12 +20,17 @@ std::string FileHandler::readHtmlFile(const boost::filesystem::path& filePath, s
     }
 }
 
-void FileHandler::processHtmlFile(const boost::filesystem::path& filePath, std::function<void(const std::string&)> fillResponseCallback){
+void FileHandler::processHtmlFile(const boost::filesystem::path& filePath, FillResponseType fillResponseCallback){
     std::cout << "Processing HTML file...\n";
-    fillResponseCallback(readHtmlFile(filePath, fillResponseCallback));
+    fillResponseCallback(readTextFile(filePath, fillResponseCallback), mHtmlContentType);
 }
 
-void FileHandler::processRegularFile(const boost::filesystem::path& filePath, std::function<void(const std::string&)> fillResponseCallback){
+void FileHandler::processTxtFile(const boost::filesystem::path& filePath, FillResponseType fillResponseCallback){
+    std::cout << "Processing HTML file...\n";
+    fillResponseCallback(readTextFile(filePath, fillResponseCallback), mTxtContentType);
+}
+
+void FileHandler::processRegularFile(const boost::filesystem::path& filePath, FillResponseType fillResponseCallback){
     std::cout << "Processing regular file...\n";
     try{
         if(boost::filesystem::exists(filePath)){
@@ -35,6 +40,8 @@ void FileHandler::processRegularFile(const boost::filesystem::path& filePath, st
                 std::string fileExt = filePath.extension().string();
                 if(fileExt == ".html"){
                     processHtmlFile(filePath, fillResponseCallback);
+                } else if (fileExt == ".txt"){
+                    processTxtFile(filePath, fillResponseCallback);
                 } else {
                     std::cout << "Can't process extension: " << fileExt << std::endl;
                 }

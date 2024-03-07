@@ -49,10 +49,11 @@ void HTTPServer::handleGetRequest(const std::string& request){
         if(parts.size() > 1){
             std::cout << "Request data: " << parts[1] << std::endl;
             boost::filesystem::path filePath(parts[1]);
-            boost::filesystem::path directFilePath = (boost::filesystem::current_path() / filePath);
+            boost::filesystem::path directFilePath = (boost::filesystem::current_path()/filePath);
 
-            auto fillResponseCallback = [this](const std::string& response) -> void {
-                mFileContent = response;
+            auto fillResponseCallback = [this](const std::string& fileContent, const std::string& contentType) -> void {
+                mFileContent = fileContent;
+                mContentType = contentType;
             };
 
             mFileHandler->processRegularFile(directFilePath, fillResponseCallback);
@@ -74,7 +75,6 @@ std::string HTTPServer::buildResponse(){
     return response.str();
 }
 
-// Funkcja obsługująca żądania HTTP
 void HTTPServer::handleRequest(tcp::socket& socket) {
     boost::asio::streambuf request;
     boost::asio::read_until(socket, request, "\r\n\r\n");
