@@ -51,9 +51,9 @@ void HTTPServer::handleGetRequest(const std::string& request){
             boost::filesystem::path filePath(parts[1]);
             boost::filesystem::path directFilePath = (boost::filesystem::current_path()/filePath);
 
-            auto fillResponseCallback = [this](const std::string& fileContent, const std::string& contentType) -> void {
-                mFileContent = fileContent;
+            auto fillResponseCallback = [this](const std::vector<unsigned char>& vectorFileContent, const std::string& contentType) -> void {
                 mContentType = contentType;
+                mVectorFileContent = vectorFileContent;
             };
 
             mFileHandler->processRegularFile(directFilePath, fillResponseCallback);
@@ -69,9 +69,15 @@ void HTTPServer::handleGetRequest(const std::string& request){
 std::string HTTPServer::buildResponse(){
     std::stringstream response;
     response << "HTTP/1.1 200 OK\r\nContent-Length: ";
-    response << mFileContent.size();
+    std::stringstream fileContentStream;
+    fileContentStream.write(reinterpret_cast<const char*>(&mVectorFileContent[0]), mVectorFileContent.size());
+    std::string fileContentString = fileContentStream.str();
+    response << fileContentString.size();
+    response << "\r\n";
+    response << "Content-Type: ";
+    response << mContentType;
     response <<  "\r\n\r\n";
-    response << mFileContent;
+    response << fileContentString;
     return response.str();
 }
 

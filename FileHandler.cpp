@@ -2,32 +2,31 @@
 #include <sstream>
 #include <string>
 #include <fstream>
+#include <algorithm>
 
-std::string FileHandler::readTextFile(const boost::filesystem::path& filePath, FillResponseType fillResponseCallback){
-    std::string line;
-    std::ifstream textFile(filePath.string());
+std::vector<unsigned char> FileHandler::readFile(const boost::filesystem::path& filePath) {
+    std::ifstream textFile(filePath.string(), std::ios::binary);
     if (textFile.is_open()) {
-        std::stringstream fileStream;
-        while (getline(textFile, line)) {
-            fileStream << line;
-            fileStream << '\n';
-        }
+        textFile.seekg(0, std::ios::end);
+        std::streampos fileSize = textFile.tellg();
+        textFile.seekg(0, std::ios::beg);
+        std::vector<unsigned char> fileData(fileSize);
+        textFile.read(reinterpret_cast<char*>(&fileData[0]), fileSize);
         textFile.close();
-        return fileStream.str();
+        return fileData;
     } else {
         std::cout << "Can't open the file: " << filePath.string();
-        return "";
+        return std::vector<unsigned char>();
     }
 }
 
-void FileHandler::processHtmlFile(const boost::filesystem::path& filePath, FillResponseType fillResponseCallback){
-    std::cout << "Processing HTML file...\n";
-    fillResponseCallback(readTextFile(filePath, fillResponseCallback), mHtmlContentType);
-}
-
-void FileHandler::processTxtFile(const boost::filesystem::path& filePath, FillResponseType fillResponseCallback){
-    std::cout << "Processing HTML file...\n";
-    fillResponseCallback(readTextFile(filePath, fillResponseCallback), mTxtContentType);
+void FileHandler::processFile(const boost::filesystem::path& filePath, const std::string fileContentType, FillResponseType fillResponseCallback){
+    std::cout << "Processing file...\n";
+    if(fillResponseCallback){
+        fillResponseCallback(readFile(filePath), fileContentType);
+    } else {
+        std::cout << "Can't load response...\n";
+    }
 }
 
 void FileHandler::processRegularFile(const boost::filesystem::path& filePath, FillResponseType fillResponseCallback){
@@ -38,10 +37,9 @@ void FileHandler::processRegularFile(const boost::filesystem::path& filePath, Fi
             if(boost::filesystem::is_regular_file(filePath)){
                 std::cout << "File " << filePath << " is regular file.\n";
                 std::string fileExt = filePath.extension().string();
-                if(fileExt == ".html"){
-                    processHtmlFile(filePath, fillResponseCallback);
-                } else if (fileExt == ".txt"){
-                    processTxtFile(filePath, fillResponseCallback);
+                auto extenstionIterator = std::find_if(mContentTypePairHolder.begin(), mContentTypePairHolder.end(), [&fileExt](const std::pair<std::string, std::string>& pair){return pair.first == fileExt;});
+                if(extensionIterator != mContentTypePairHolder.end()){
+                    processFile(filePath, (*extensionIterator).second, fillResponseCallback);
                 } else {
                     std::cout << "Can't process extension: " << fileExt << std::endl;
                 }
@@ -53,6 +51,5 @@ void FileHandler::processRegularFile(const boost::filesystem::path& filePath, Fi
         }
     } catch(const std::exception& e){
         std::cout << e.what();
-    } 
-
+    }
 }

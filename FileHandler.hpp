@@ -5,7 +5,7 @@
 #include <boost/filesystem.hpp>
 #include <functional>
 
-typedef std::function<void(const std::string&, const std::string&)> FillResponseType;
+typedef std::function<void(const std::vector<unsigned char>& vectorFileContent, const std::string&)> FillResponseType;
 
 enum class fileExtension {
     UNKNOWN = 0,
@@ -18,14 +18,15 @@ public:
     FileHandler() = default;
     ~FileHandler() = default;
     FileHandler(const FileHandler&) = delete;
-    std::string readTextFile(const boost::filesystem::path& filePath, FillResponseType);
-    void processTxtFile(const boost::filesystem::path& filePath, FillResponseType);
-    void processHtmlFile(const boost::filesystem::path& filePath, FillResponseType);
+    std::vector<unsigned char> readFile(const boost::filesystem::path& filePath);
+    void processFile(const boost::filesystem::path& filePath, const std::string fileContentType, FillResponseType fillResponseCallback);
     void processRegularFile(const boost::filesystem::path& filePath, FillResponseType);
 private:
-    const std::string mHtmlContentType = "text/html";
-    const std::string mTxtContentType = "text/html";
-    const std::string mJpegContentType = "image/jpg";
+    std::vector<std::pair<std::string, std::string>> mContentTypePairHolder = {
+        {".html", "text/html"},
+        {".txt", "text/plain"},
+        {".jpg", "image/jpeg"}
+    };
 
 };
 
